@@ -84,6 +84,25 @@
   @media (max-width:760px){
     .feat-a,.feat-b,.feat-c,.feat-d,.feat-e{grid-column:span 6;}
   }
+  @media (max-width:860px){
+    nav .navlinks{display:none;}
+    .hero{padding:40px 0 40px;}
+    .hero-grid{grid-template-columns:1fr;gap:28px;}
+    h1{font-size:28px;}
+    .hero p.lead{font-size:14.5px;}
+    .hero-ctas .btn{flex:1;justify-content:center;font-size:13px;padding:12px 14px;}
+    section{padding:40px 0;}
+    h2{font-size:22px;}
+    .feat-grid{grid-template-columns:1fr;}
+    .feat-f{flex-direction:column;align-items:flex-start;}
+    .demo-frame iframe{height:420px;}
+    .unlock-card{padding:26px 20px;border-radius:18px;}
+    .nav .wrap{height:56px;}
+  }
+  @media (max-width:420px){
+    .demo-frame iframe{height:340px;}
+    h1{font-size:24px;}
+  }
 
   /* ---------- Demo ---------- */
   .demo-frame{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:var(--paper);}
@@ -129,7 +148,7 @@
       <a href="#demo">دمو</a>
       <a href="#download">دانلود</a>
     </div>
-    <a href="#download" class="nav-cta">دانلود برای ویندوز</a>
+    <a href="#download" class="nav-cta" id="navCta">دانلود برای ویندوز</a>
   </div>
 </nav>
 
@@ -140,7 +159,7 @@
       <h1>هر روز، یک قدم — این‌بار روی دسکتاپ خودت.</h1>
       <p class="lead">Planner یه پلنر عادت روزانه با تقویم شمسی، نمودار پیشرفت، و طراحی قابل‌شخصی‌سازیه. دیگه نیازی به باز کردن مرورگر نیست؛ نصبش کن و از روی دسکتاپت اجراش کن.</p>
       <div class="hero-ctas">
-        <a href="#download" class="btn btn-primary">دانلود برای ویندوز</a>
+        <a href="#download" class="btn btn-primary" id="heroCta">دانلود برای ویندوز</a>
         <a href="#demo" class="btn btn-ghost">مشاهده‌ی دمو</a>
       </div>
     </div>
@@ -241,8 +260,8 @@
         <div class="check">✅</div>
         <h3>کد تأیید شد!</h3>
         <!-- جای لینک واقعی فایل نصبی: بعد از آپلود روی GitHub Releases، لینکش رو اینجا بذار -->
-        <a href="https://github.com/seyedsajjadhosseini92-afk/habit-planner1/releases/download/v1.0.1/Planner_1.0.0_x64-setup.exe" class="download-btn">⬇ دانلود Planner-Setup.exe</a>
-        <div class="download-sub">نسخه‌ی ۱.۰.۰ — برای ویندوز ۱۰ و ۱۱</div>
+        <a href="https://github.com/seyedsajjadhosseini92-afk/habit-planner1/releases/download/v1.0.1/Planner_1.0.0_x64-setup.exe" class="download-btn" id="mainDownloadBtn">⬇ دانلود Planner-Setup.exe</a>
+        <div class="download-sub" id="downloadSubText">نسخه‌ی ۱.۰.۰ — برای ویندوز ۱۰ و ۱۱</div>
       </div>
     </div>
   </div>
@@ -255,6 +274,7 @@
 <script>
 /* کدهای معتبر رو همین‌جا اضافه/تغییر بده */
 var VALID_CODES = ['PLANNER2026', 'DEMO1234'];
+var WEB_APP_URL = 'https://seyedsajjadhosseini92-afk.github.io/habit-planner1/';
 
 document.getElementById('unlockBtn').addEventListener('click', tryUnlock);
 document.getElementById('codeInput').addEventListener('keydown', function(e){
@@ -269,6 +289,39 @@ function tryUnlock(){
     document.getElementById('codeError').textContent = 'کد اشتباهه، دوباره امتحان کن.';
   }
 }
+
+/* ---------- تشخیص دستگاه: ویندوز (دانلود exe) در برابر موبایل (لینک وب‌اپ نصب‌شونده) ---------- */
+(function(){
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  var isMobile = isIOS || isAndroid || /Mobi/i.test(ua);
+
+  if(!isMobile) return; // دسکتاپ/ویندوز → همون دکمه‌ی exe فعلی بمونه
+
+  var navCta = document.getElementById('navCta');
+  var heroCta = document.getElementById('heroCta');
+  var mainBtn = document.getElementById('mainDownloadBtn');
+  var subText = document.getElementById('downloadSubText');
+  var mobileLabel = 'استفاده روی گوشی';
+
+  if(navCta) navCta.textContent = mobileLabel;
+  if(heroCta) heroCta.textContent = mobileLabel;
+
+  if(mainBtn){
+    mainBtn.href = WEB_APP_URL;
+    mainBtn.target = '_blank';
+    mainBtn.rel = 'noopener';
+    mainBtn.textContent = '🔗 باز کردن Planner (وب‌اپ)';
+  }
+  if(subText){
+    if(isIOS){
+      subText.innerHTML = 'نسخه‌ی ویندوز روی آیفون/آیپد کار نمی‌کنه. بعد از باز شدن صفحه، دکمه‌ی Share رو بزن و «Add to Home Screen» رو انتخاب کن تا مثل یه اپ واقعی رو صفحه‌ی اصلی بشینه.';
+    } else {
+      subText.innerHTML = 'نسخه‌ی ویندوز روی گوشی کار نمی‌کنه. بعد از باز شدن صفحه، از منوی مرورگر گزینه‌ی «Install app» یا «Add to Home screen» رو بزن تا مثل یه اپ واقعی نصب بشه.';
+    }
+  }
+})();
 </script>
 </body>
 </html>
