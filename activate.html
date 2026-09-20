@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فعال‌سازی و دانلود - Planner</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1d2e, #0f1115);
+    color: #eaeaea;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #1a1d24;
+    border: 1px solid #2a2e37;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  h1 { font-size: 20px; margin: 0 0 6px; text-align: center; }
+  .sub { color: #999; font-size: 13px; text-align: center; margin-bottom: 24px; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: #ccc; }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #333744;
+    background: #0f1115;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  button {
+    width: 100%;
+    background: #4f7cff;
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover { background: #3a63e0; }
+  button:disabled { background: #333744; cursor: not-allowed; }
+  .msg {
+    margin-top: 14px; font-size: 13px; padding: 12px;
+    border-radius: 10px; display: none; text-align: center;
+  }
+  .msg.ok { background: #14321f; color: #4ade80; display: block; }
+  .msg.err { background: #3a1414; color: #f87171; display: block; }
+  .msg.loading { background: #1a2440; color: #93c5fd; display: block; }
+  .logo { text-align: center; font-size: 32px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">📋</div>
+  <h1>فعال‌سازی و دانلود Planner</h1>
+  <div class="sub">ایمیل و کد فعال‌سازی که برات ارسال شده رو وارد کن</div>
+
+  <label>ایمیل</label>
+  <input type="email" id="email" placeholder="you@example.com">
+
+  <label>کد فعال‌سازی (توکن)</label>
+  <input type="text" id="token" placeholder="کدی که دریافت کردی" style="direction:ltr;">
+
+  <button onclick="startDownload()" id="downloadBtn">دریافت فایل نصب</button>
+
+  <div id="msg" class="msg"></div>
+</div>
+
+<script>
+const API_BASE = "https://planner-backend.q2cfdqaivkrmau1lv1somzyh5kar2s.workers.dev";
+
+async function startDownload() {
+  const email = document.getElementById('email').value.trim();
+  const token = document.getElementById('token').value.trim();
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('downloadBtn');
+
+  if (!email || !token) {
+    showMsg('لطفاً ایمیل و کد فعال‌سازی رو کامل وارد کن.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  showMsg('در حال بررسی و آماده‌سازی فایل... کمی صبر کن.', 'loading');
+
+  try {
+    const url = `${API_BASE}/api/download?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showMsg(data.error || 'خطایی رخ داد. کد یا ایمیل رو دوباره چک کن.', 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="(.+?)"/);
+    const filename = match ? match[1] : 'Planner-Setup.exe';
+
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showMsg('دانلود شروع شد! ✅', 'ok');
+  } catch (e) {
+    showMsg('خطا در اتصال به سرور. دوباره امتحان کن.', 'err');
+    btn.disabled = false;
+  }
+}
+
+function showMsg(text, type) {
+  const msg = document.getElementById('msg');
+  msg.textContent = text;
+  msg.className = 'msg ' + type;
+}
+</script>
+</body>
+</html>
