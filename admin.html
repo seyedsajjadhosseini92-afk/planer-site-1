@@ -46,6 +46,9 @@
   button:hover { background: #3a63e0; }
   button.secondary { background: #333744; }
   button.secondary:hover { background: #444a5a; }
+  button.approve-btn { background: #22c55e; padding: 6px 14px; font-size: 12.5px; }
+  button.approve-btn:hover { background: #16a34a; }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
   .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
   .row > div { flex: 1; min-width: 200px; }
   table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
@@ -58,50 +61,33 @@
   .msg { margin-top: 10px; font-size: 13px; padding: 10px; border-radius: 8px; display:none; }
   .msg.ok { background: #14321f; color: #4ade80; display:block; }
   .msg.err { background: #3a1414; color: #f87171; display:block; }
-  .token-box {
-    background: #0f1115; border: 1px dashed #4f7cff; border-radius: 8px;
-    padding: 10px; font-family: monospace; font-size: 12px; word-break: break-all;
-    margin-top: 10px; direction: ltr; text-align: left;
-  }
   .small { font-size: 12px; color: #888; }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #2a2e37; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>پنل مدیریت خریدها</h1>
-  <div class="sub">تأیید ایمیل مشتریان و مشاهده‌ی وضعیت لایسنس‌ها</div>
+  <div class="sub">درخواست‌های مشتریان رو تأیید کن و وضعیت‌شون رو ببین</div>
 
   <div class="card">
     <label>رمز ادمین</label>
     <input type="password" id="adminKey" placeholder="رمزی که موقع wrangler secret put ADMIN_KEY گذاشتی">
     <div class="small">این رمز فقط توی مرورگر خودت نگه داشته می‌شه، جایی فرستاده نمی‌شه تا وقتی روی دکمه‌ها کلیک کنی.</div>
+    <button onclick="loadList()" style="margin-top:10px;">بارگذاری درخواست‌ها</button>
   </div>
 
   <div class="card">
     <div class="row">
-      <div>
-        <label>ایمیل مشتری برای تأیید</label>
-        <input type="email" id="approveEmail" placeholder="customer@example.com">
-      </div>
+      <div><h1 style="font-size:16px;margin:0;">درخواست‌ها</h1></div>
       <div style="flex: 0 0 auto;">
-        <button onclick="approveEmail()">تأیید و ساخت توکن</button>
-      </div>
-    </div>
-    <div id="approveMsg" class="msg"></div>
-    <div id="tokenBox" class="token-box" style="display:none;"></div>
-  </div>
-
-  <div class="card">
-    <div class="row">
-      <div><h1 style="font-size:16px;margin:0;">لیست خریداران</h1></div>
-      <div style="flex: 0 0 auto;">
-        <button class="secondary" onclick="loadList()">بروزرسانی لیست</button>
+        <button class="secondary" onclick="loadList()">بروزرسانی</button>
       </div>
     </div>
     <div id="listMsg" class="msg"></div>
     <table id="listTable" style="display:none;">
       <thead>
-        <tr><th>ایمیل</th><th>وضعیت</th><th>استفاده‌شده</th><th>تاریخ ساخت</th><th>توکن</th></tr>
+        <tr><th>ایمیل</th><th>وضعیت</th><th>استفاده‌شده</th><th>تاریخ ثبت</th><th>کد فعال‌سازی</th><th>عملیات</th></tr>
       </thead>
       <tbody id="listBody"></tbody>
     </table>
@@ -112,21 +98,14 @@
 const API_BASE = "https://planner-backend.q2cfdqaivkrmau1lv1somzyh5kar2s.workers.dev";
 
 function getKey() {
-  const k = document.getElementById('adminKey').value.trim();
-  return k;
+  return document.getElementById('adminKey').value.trim();
 }
 
-async function approveEmail() {
+async function approveEmail(email, btnEl) {
   const adminKey = getKey();
-  const email = document.getElementById('approveEmail').value.trim();
-  const msg = document.getElementById('approveMsg');
-  const tokenBox = document.getElementById('tokenBox');
-  msg.style.display = 'none';
-  tokenBox.style.display = 'none';
-
-  if (!adminKey) { showMsg(msg, 'رمز ادمین رو وارد کن.', false); return; }
-  if (!email) { showMsg(msg, 'ایمیل رو وارد کن.', false); return; }
-
+  if (!adminKey) { alert('اول رمز ادمین رو بزن.'); return; }
+  btnEl.disabled = true;
+  btnEl.textContent = '...';
   try {
     const res = await fetch(`${API_BASE}/api/approve`, {
       method: 'POST',
@@ -134,14 +113,17 @@ async function approveEmail() {
       body: JSON.stringify({ email, adminKey })
     });
     const data = await res.json();
-    if (!res.ok) { showMsg(msg, data.error || 'خطا رخ داد.', false); return; }
-    showMsg(msg, 'تأیید شد! توکن ساخته شد.', true);
-    tokenBox.style.display = 'block';
-    tokenBox.textContent = data.token;
-    document.getElementById('approveEmail').value = '';
+    if (!res.ok) {
+      alert(data.error || 'خطا رخ داد.');
+      btnEl.disabled = false;
+      btnEl.textContent = 'تأیید';
+      return;
+    }
     loadList();
   } catch (e) {
-    showMsg(msg, 'خطا در اتصال به سرور.', false);
+    alert('خطا در اتصال به سرور.');
+    btnEl.disabled = false;
+    btnEl.textContent = 'تأیید';
   }
 }
 
@@ -163,17 +145,24 @@ async function loadList() {
     data.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     for (const item of data.items) {
       const tr = document.createElement('tr');
+      const actionCell = item.status === 'pending'
+        ? `<button class="approve-btn" onclick="approveEmail('${escapeAttr(item.email)}', this)">تأیید</button>`
+        : `<span class="pill">${item.used ? 'دانلود شده' : 'آماده دانلود'}</span>`;
+      const tokenCell = item.token
+        ? `<button class="secondary" style="padding:6px 10px;font-size:12px;" onclick="copyToken('${escapeAttr(item.token)}', this)">کپی کد</button>`
+        : '<span class="small">—</span>';
       tr.innerHTML = `
         <td>${escapeHtml(item.email)}</td>
         <td class="${item.status === 'approved' ? 'status-approved' : 'status-pending'}">${item.status === 'approved' ? 'تأیید شده' : 'در انتظار'}</td>
         <td class="${item.used ? 'used-yes' : 'used-no'}">${item.used ? 'بله' : 'خیر'}</td>
         <td>${new Date(item.createdAt).toLocaleDateString('fa-IR')}</td>
-        <td style="direction:ltr;text-align:left;font-family:monospace;font-size:11px;">${item.token.slice(0, 12)}...</td>
+        <td>${tokenCell}</td>
+        <td>${actionCell}</td>
       `;
       body.appendChild(tr);
     }
     table.style.display = data.items.length ? 'table' : 'none';
-    if (!data.items.length) showMsg(msg, 'هنوز هیچ خریداری ثبت نشده.', true);
+    if (!data.items.length) showMsg(msg, 'هنوز هیچ درخواستی ثبت نشده.', true);
   } catch (e) {
     showMsg(msg, 'خطا در اتصال به سرور.', false);
   }
@@ -189,6 +178,19 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+function escapeAttr(str) {
+  return String(str).replace(/'/g, "\\'");
+}
+
+function copyToken(token, btnEl) {
+  navigator.clipboard.writeText(token).then(() => {
+    const original = btnEl.textContent;
+    btnEl.textContent = 'کپی شد!';
+    setTimeout(() => { btnEl.textContent = original; }, 1500);
+  }).catch(() => {
+    prompt('این کد رو کپی کن:', token);
+  });
 }
 </script>
 </body>
