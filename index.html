@@ -64,6 +64,7 @@
     padding: 16px 34px; border-radius: 14px;
     box-shadow: 0 14px 30px -10px rgba(255,120,50,0.5);
     transition: transform 0.15s ease;
+    border: none; cursor: pointer;
   }
   .cta-btn:hover { transform: translateY(-2px); }
   .scroll-hint { margin-top: 18px; font-size: 12.5px; color: #565c72; }
@@ -121,10 +122,11 @@
     padding: 14px; border-radius: 10px;
   }
   .form-card button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .msg { margin-top: 14px; font-size: 13px; padding: 12px; border-radius: 10px; display: none; text-align: center; }
+  .msg { margin-top: 14px; font-size: 13px; padding: 12px; border-radius: 10px; display: none; text-align: center; line-height: 1.8; }
   .msg.ok { background: #10321f; color: var(--mint); display: block; }
   .msg.err { background: #3a1414; color: #f87171; display: block; }
   .msg.loading { background: #1a2440; color: #93c5fd; display: block; }
+  .msg.pending { background: #2a2410; color: #fbbf24; display: block; }
 
   .install-note {
     margin-top: 28px; font-size: 12.5px; color: var(--text-dim);
@@ -169,8 +171,8 @@
     روزانه، هفتگی و ماهانه ببین. یه ابزار سبک و شخصی برای اینکه بی‌نظمی رو کنار بذاری.
   </p>
 
-  <a href="#download" class="cta-btn">دانلود و نصب</a>
-  <div class="scroll-hint">↓ راهنمای کامل نصب پایین همین صفحه‌ست</div>
+  <a href="#download" class="cta-btn">درخواست برنامه</a>
+  <div class="scroll-hint">↓ راهنمای کامل پایین همین صفحه‌ست</div>
 </section>
 
 <!-- FEATURES -->
@@ -203,32 +205,32 @@
   </div>
 </section>
 
-<!-- DOWNLOAD -->
+<!-- DOWNLOAD / REQUEST -->
 <section class="download" id="download">
   <div class="inner">
-    <h2>نصب و دانلود</h2>
-    <p class="sub">فرآیند دریافت فایل نصب، قدم‌به‌قدم</p>
+    <h2>درخواست برنامه</h2>
+    <p class="sub">فقط ایمیلت رو بده، بقیه‌ش با ما</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">۱</div>
         <div class="step-text">
-          <h4>خرید و ارسال ایمیل</h4>
-          <p>بعد از پرداخت، ایمیلت رو برای ادمین بفرست تا حسابت تأیید بشه.</p>
+          <h4>ایمیلت رو ثبت کن</h4>
+          <p>پایین همین باکس، ایمیلت رو بزن و دکمه رو بزن.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">۲</div>
         <div class="step-text">
-          <h4>دریافت کد فعال‌سازی</h4>
-          <p>یه کد فعال‌سازی برات ارسال می‌شه (از همون طریقی که باهاش در ارتباط بودی).</p>
+          <h4>منتظر تأیید بمون</h4>
+          <p>درخواستت بررسی می‌شه و تأیید می‌شه (معمولاً سریع).</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">۳</div>
         <div class="step-text">
-          <h4>وارد کردن ایمیل و کد اینجا</h4>
-          <p>توی فرم پایین، ایمیل و کدت رو بزن و دکمه‌ی دانلود رو بزن.</p>
+          <h4>دوباره با همین ایمیل برگرد</h4>
+          <p>وقتی تأیید شد، دوباره همین ایمیل رو بزن — دکمه‌ی دانلود خودش میاد.</p>
         </div>
       </div>
     </div>
@@ -236,10 +238,21 @@
     <div class="form-card">
       <label>ایمیل</label>
       <input type="email" id="email" placeholder="you@example.com">
-      <label>کد فعال‌سازی</label>
-      <input type="text" id="token" placeholder="کدی که دریافت کردی" style="direction:ltr;">
-      <button onclick="startDownload()" id="downloadBtn">دریافت فایل نصب</button>
+      <button onclick="submitRequest()" id="requestBtn">ثبت / بررسی درخواست</button>
       <div id="msg" class="msg"></div>
+
+      <div style="text-align:center; margin-top:18px;">
+        <a href="#" onclick="toggleCodeForm(event)" id="toggleCodeLink" style="color:#7a8098; font-size:12.5px; text-decoration:underline;">کد فعال‌سازی از قبل داری؟</a>
+      </div>
+
+      <div id="codeForm" style="display:none; margin-top:18px; padding-top:18px; border-top:1px solid var(--panel-border);">
+        <label>ایمیل</label>
+        <input type="email" id="codeEmail" placeholder="you@example.com">
+        <label>کد فعال‌سازی</label>
+        <input type="text" id="codeToken" placeholder="کدی که برات فرستاده شده" style="direction:ltr;">
+        <button onclick="downloadWithCode()" id="codeBtn">دانلود با کد</button>
+        <div id="codeMsg" class="msg"></div>
+      </div>
     </div>
 
     <div class="install-note">
@@ -259,27 +272,67 @@
 <script>
 const API_BASE = "https://planner-backend.q2cfdqaivkrmau1lv1somzyh5kar2s.workers.dev";
 
-async function startDownload() {
+async function submitRequest() {
   const email = document.getElementById('email').value.trim();
-  const token = document.getElementById('token').value.trim();
+  const btn = document.getElementById('requestBtn');
   const msg = document.getElementById('msg');
-  const btn = document.getElementById('downloadBtn');
 
-  if (!email || !token) {
-    showMsg('لطفاً ایمیل و کد فعال‌سازی رو کامل وارد کن.', 'err');
+  if (!email) {
+    showMsg('لطفاً ایمیلت رو وارد کن.', 'err');
     return;
   }
 
   btn.disabled = true;
-  showMsg('در حال بررسی و آماده‌سازی فایل... کمی صبر کن.', 'loading');
+  showMsg('در حال بررسی...', 'loading');
 
+  try {
+    const res = await fetch(`${API_BASE}/api/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showMsg(data.error || 'خطایی رخ داد.', 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    if (data.status === 'pending') {
+      showMsg('درخواستت با موفقیت ثبت شد ✅ منتظر تأیید باش، بعداً با همین ایمیل دوباره سر بزن.', 'pending');
+      btn.disabled = false;
+      return;
+    }
+
+    if (data.status === 'approved' && data.token) {
+      showMsg('درخواستت تأیید شده! 🎉 در حال آماده‌سازی فایل...', 'loading');
+      await triggerDownload(email, data.token);
+      return;
+    }
+
+    if (data.status === 'approved' && data.used) {
+      showMsg('این ایمیل قبلاً فایل رو دریافت کرده. اگه دوباره لازمش داری، با ادمین در ارتباط باش.', 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    showMsg('وضعیت نامشخص. لطفاً دوباره امتحان کن.', 'err');
+    btn.disabled = false;
+  } catch (e) {
+    showMsg('خطا در اتصال به سرور.', 'err');
+    btn.disabled = false;
+  }
+}
+
+async function triggerDownload(email, token) {
+  const btn = document.getElementById('requestBtn');
   try {
     const url = `${API_BASE}/api/download?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
     const res = await fetch(url);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      showMsg(data.error || 'خطایی رخ داد. کد یا ایمیل رو دوباره چک کن.', 'err');
+      showMsg(data.error || 'خطا در دریافت فایل.', 'err');
       btn.disabled = false;
       return;
     }
@@ -299,13 +352,73 @@ async function startDownload() {
     showMsg('دانلود شروع شد! فایل رو از پایین مرورگرت پیدا کن. ✅', 'ok');
     btn.disabled = false;
   } catch (e) {
-    showMsg('خطا در اتصال به سرور. دوباره امتحان کن.', 'err');
+    showMsg('خطا در دریافت فایل.', 'err');
     btn.disabled = false;
   }
 }
 
 function showMsg(text, type) {
   const msg = document.getElementById('msg');
+  msg.textContent = text;
+  msg.className = 'msg ' + type;
+}
+
+function toggleCodeForm(e) {
+  e.preventDefault();
+  const form = document.getElementById('codeForm');
+  const link = document.getElementById('toggleCodeLink');
+  const showing = form.style.display !== 'none';
+  form.style.display = showing ? 'none' : 'block';
+  link.textContent = showing ? 'کد فعال‌سازی از قبل داری؟' : 'بستن';
+}
+
+async function downloadWithCode() {
+  const email = document.getElementById('codeEmail').value.trim();
+  const token = document.getElementById('codeToken').value.trim();
+  const btn = document.getElementById('codeBtn');
+  const msg = document.getElementById('codeMsg');
+
+  if (!email || !token) {
+    showCodeMsg('لطفاً ایمیل و کد رو کامل وارد کن.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  showCodeMsg('در حال آماده‌سازی فایل...', 'loading');
+
+  try {
+    const url = `${API_BASE}/api/download?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showCodeMsg(data.error || 'کد یا ایمیل اشتباهه.', 'err');
+      btn.disabled = false;
+      return;
+    }
+
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="(.+?)"/);
+    const filename = match ? match[1] : 'Planner-Setup.exe';
+
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showCodeMsg('دانلود شروع شد! ✅', 'ok');
+    btn.disabled = false;
+  } catch (e) {
+    showCodeMsg('خطا در اتصال به سرور.', 'err');
+    btn.disabled = false;
+  }
+}
+
+function showCodeMsg(text, type) {
+  const msg = document.getElementById('codeMsg');
   msg.textContent = text;
   msg.className = 'msg ' + type;
 }
