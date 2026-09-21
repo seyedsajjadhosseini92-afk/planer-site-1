@@ -79,6 +79,20 @@
 
   <div class="card">
     <div class="row">
+      <div>
+        <label>تأیید دستی یه ایمیل (حتی اگه خودش درخواست نداده)</label>
+        <input type="email" id="manualEmail" placeholder="customer@example.com">
+      </div>
+      <div style="flex: 0 0 auto;">
+        <button onclick="manualApprove()">تأیید و ساخت توکن</button>
+      </div>
+    </div>
+    <div id="manualMsg" class="msg"></div>
+    <div id="manualTokenBox" class="small" style="display:none; margin-top:8px; direction:ltr; text-align:left; font-family:monospace; background:#0f1115; border:1px dashed #4f7cff; border-radius:8px; padding:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
       <div><h1 style="font-size:16px;margin:0;">درخواست‌ها</h1></div>
       <div style="flex: 0 0 auto;">
         <button class="secondary" onclick="loadList()">بروزرسانی</button>
@@ -99,6 +113,35 @@ const API_BASE = "https://planner-backend.q2cfdqaivkrmau1lv1somzyh5kar2s.workers
 
 function getKey() {
   return document.getElementById('adminKey').value.trim();
+}
+
+async function manualApprove() {
+  const adminKey = getKey();
+  const email = document.getElementById('manualEmail').value.trim();
+  const msg = document.getElementById('manualMsg');
+  const tokenBox = document.getElementById('manualTokenBox');
+  msg.style.display = 'none';
+  tokenBox.style.display = 'none';
+
+  if (!adminKey) { showMsg(msg, 'رمز ادمین رو وارد کن.', false); return; }
+  if (!email) { showMsg(msg, 'ایمیل رو وارد کن.', false); return; }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, adminKey })
+    });
+    const data = await res.json();
+    if (!res.ok) { showMsg(msg, data.error || 'خطا رخ داد.', false); return; }
+    showMsg(msg, 'تأیید شد! کد فعال‌سازی ساخته شد:', true);
+    tokenBox.style.display = 'block';
+    tokenBox.textContent = data.token;
+    document.getElementById('manualEmail').value = '';
+    loadList();
+  } catch (e) {
+    showMsg(msg, 'خطا در اتصال به سرور.', false);
+  }
 }
 
 async function approveEmail(email, btnEl) {
