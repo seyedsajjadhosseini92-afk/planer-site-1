@@ -3,237 +3,487 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پنل مدیریت - Planner</title>
+<title>پنل مدیریت · Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: Tahoma, Arial, sans-serif;
-    background: #0f1115;
-    color: #eaeaea;
-    margin: 0;
-    padding: 24px;
+  :root{
+    --bg:#0A0B14; --bg-2:#0E101C; --paper:rgba(255,255,255,.045); --paper-2:rgba(255,255,255,.075);
+    --ink:#F3F4FF; --ink-soft:#A7A9C4; --ink-dim:#6E7090;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --violet:#7C5FE0; --blue:#4F7FE0; --teal:#2C9E8F; --amber:#D79A3A; --red:#D1554A; --green:#34D399;
+    --grad:linear-gradient(120deg,#8B7CF6 0%,#6366F1 42%,#2DD4BF 100%);
+    --radius:20px;
+    --shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 24px 60px -28px rgba(0,0,0,.85);
   }
-  .container { max-width: 900px; margin: 0 auto; }
-  h1 { font-size: 20px; margin-bottom: 4px; }
-  .sub { color: #999; font-size: 13px; margin-bottom: 24px; }
-  .card {
-    background: #1a1d24;
-    border: 1px solid #2a2e37;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
+  *{box-sizing:border-box; margin:0; padding:0;}
+  *::-webkit-scrollbar{width:9px; height:9px;}
+  *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13); border-radius:99px;}
+  *::-webkit-scrollbar-track{background:transparent;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Vazirmatn',Tahoma,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.7;
+    min-height:100vh; padding:34px 20px 60px;
   }
-  label { display: block; font-size: 13px; margin-bottom: 6px; color: #ccc; }
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #333744;
-    background: #0f1115;
-    color: #fff;
-    font-size: 14px;
-    margin-bottom: 12px;
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:rgba(139,124,246,.35); color:#fff;}
+
+  /* ambient glow */
+  .glow{position:fixed; inset:-20% -10% auto -10%; height:110vh; z-index:0; pointer-events:none; filter:blur(80px); opacity:.5;}
+  .glow b{position:absolute; border-radius:50%; display:block;}
+  .g1{width:44vw; height:44vw; top:-8vw; right:-8vw; background:radial-gradient(circle,#7C5FE0 0%,transparent 68%);}
+  .g2{width:38vw; height:38vw; top:30vh; left:-12vw; background:radial-gradient(circle,#2C9E8F 0%,transparent 68%);}
+  .g3{width:30vw; height:30vw; top:70vh; right:16vw; background:radial-gradient(circle,#4F7FE0 0%,transparent 70%);}
+  .grain{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.3;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size:3px 3px;}
+
+  .wrap{max-width:1080px; margin:0 auto; position:relative; z-index:1;}
+
+  /* ---------- header ---------- */
+  header{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:26px;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand .mark{width:42px; height:42px; border-radius:13px; background:var(--grad); display:grid; place-items:center;
+    box-shadow:0 10px 26px -8px rgba(139,124,246,.85); font-size:20px;}
+  .brand h1{font-size:21px; font-weight:800; letter-spacing:-.3px;}
+  .brand .tag{font-size:12.5px; color:var(--ink-dim); margin-top:-2px;}
+  .key-chip{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-soft);
+    background:var(--paper); border:1px solid var(--line); padding:8px 14px; border-radius:99px;}
+  .key-chip .dot{width:8px; height:8px; border-radius:50%; background:var(--red); box-shadow:0 0 0 3px rgba(209,85,74,.18);}
+  .key-chip.ok .dot{background:var(--green); box-shadow:0 0 0 3px rgba(52,211,153,.18);}
+
+  /* ---------- stat cards ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .stat{background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+    backdrop-filter:blur(8px); transition:.2s; position:relative; overflow:hidden;}
+  .stat:hover{transform:translateY(-2px); border-color:var(--line-2); background:var(--paper-2);}
+  .stat .n{font-size:26px; font-weight:800; letter-spacing:-.5px; line-height:1.2;}
+  .stat .l{font-size:12px; color:var(--ink-dim); margin-top:2px;}
+  .stat::after{content:""; position:absolute; top:0; right:0; width:64px; height:64px; border-radius:50%;
+    filter:blur(22px); opacity:.5; transform:translate(24px,-24px);}
+  .stat.s1::after{background:#8B7CF6;} .stat.s2::after{background:#D79A3A;}
+  .stat.s3::after{background:#2DD4BF;} .stat.s4::after{background:#D1554A;}
+  .stat.s1 .n{color:#CFC6FF;} .stat.s2 .n{color:#F5D08A;} .stat.s3 .n{color:#7DE6D6;} .stat.s4 .n{color:#F0A49B;}
+
+  /* ---------- cards ---------- */
+  .card{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.025));
+    border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:18px;
+    box-shadow:var(--shadow); backdrop-filter:blur(10px);}
+  .card-h{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px;}
+  .card-h h2{font-size:16px; font-weight:700; display:flex; align-items:center; gap:9px;}
+  .card-h h2 .ic{width:28px; height:28px; border-radius:9px; background:var(--paper-2); display:grid; place-items:center; font-size:14px;}
+  .hint{font-size:12px; color:var(--ink-dim);}
+
+  label{display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:7px; font-weight:500;}
+  .inp{width:100%; padding:11px 14px; border-radius:11px; border:1px solid var(--line-2);
+    background:rgba(10,11,20,.7); color:var(--ink); font-size:14px; font-family:inherit; transition:.18s;}
+  .inp::placeholder{color:#565877;}
+  .inp:focus{outline:none; border-color:rgba(139,124,246,.7); box-shadow:0 0 0 3px rgba(139,124,246,.16);}
+  .inp.mono{direction:ltr; text-align:left; font-family:ui-monospace,monospace; letter-spacing:.5px;}
+
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 20px;
+    border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; border:none; font-family:inherit;
+    transition:transform .16s, box-shadow .16s, background .16s; white-space:nowrap;}
+  .btn-primary{background:var(--grad); color:#fff; box-shadow:0 12px 28px -12px rgba(99,102,241,.8);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 18px 36px -12px rgba(99,102,241,.9);}
+  .btn-ghost{background:var(--paper); color:var(--ink); border:1px solid var(--line-2);}
+  .btn-ghost:hover{background:var(--paper-2); transform:translateY(-2px);}
+  .btn-sm{padding:7px 13px; font-size:12px; border-radius:9px;}
+  .btn:disabled{opacity:.55; cursor:not-allowed; transform:none!important;}
+
+  .grid2{display:grid; grid-template-columns:1fr auto; gap:14px; align-items:end;}
+  .keyrow{display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end;}
+
+  /* token reveal */
+  .tokenbox{display:none; margin-top:14px; direction:ltr; text-align:left;}
+  .tokenbox.show{display:block;}
+  .tokenbox .lab{font-size:11.5px; color:var(--ink-dim); margin-bottom:6px; direction:rtl; text-align:right;}
+  .tokenbar{display:flex; gap:10px; align-items:center; background:rgba(10,11,20,.85); border:1px dashed rgba(139,124,246,.55);
+    border-radius:12px; padding:11px 13px; font-family:ui-monospace,monospace; font-size:13px; color:#CFC6FF;
+    word-break:break-all; user-select:all;}
+  .tokenbar .copy{margin-right:auto; flex:0 0 auto;}
+
+  /* messages */
+  .msg{display:none; margin-top:12px; font-size:12.5px; padding:11px 14px; border-radius:11px; line-height:1.6;}
+  .msg.ok{display:block; background:rgba(52,211,153,.1); color:#7DE6D6; border:1px solid rgba(52,211,153,.28);}
+  .msg.err{display:block; background:rgba(209,85,74,.1); color:#F0A49B; border:1px solid rgba(209,85,74,.28);}
+  .msg.info{display:block; background:rgba(79,127,224,.1); color:#A8C4FF; border:1px solid rgba(79,127,224,.28);}
+
+  /* search row */
+  .tools{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;}
+  .tools .search{flex:1 1 220px; position:relative;}
+  .tools .search .inp{padding-right:36px;}
+  .tools .search .mag{position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--ink-dim); font-size:14px; pointer-events:none;}
+  .seg{display:flex; gap:6px; background:var(--paper); border:1px solid var(--line); padding:4px; border-radius:12px;}
+  .seg button{background:transparent; border:none; color:var(--ink-soft); font-size:12.5px; font-weight:600;
+    padding:7px 14px; border-radius:9px; cursor:pointer; font-family:inherit; transition:.16s;}
+  .seg button.on{background:var(--paper-2); color:var(--ink); box-shadow:0 2px 8px rgba(0,0,0,.3);}
+
+  /* table */
+  .tblwrap{overflow-x:auto; border-radius:14px; border:1px solid var(--line); display:none;}
+  .tblwrap.show{display:block;}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:640px;}
+  thead th{background:rgba(255,255,255,.035); color:var(--ink-dim); font-weight:600; font-size:11.5px;
+    padding:11px 13px; text-align:right; white-space:nowrap; letter-spacing:.2px;}
+  tbody td{padding:13px; border-top:1px solid var(--line); vertical-align:middle;}
+  tbody tr{transition:background .15s;}
+  tbody tr:hover{background:rgba(139,124,246,.055);}
+  .email{direction:ltr; text-align:left; font-weight:600; font-size:12.5px; word-break:break-all;}
+  .date{font-size:11.5px; color:var(--ink-dim); white-space:nowrap;}
+  .badge{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+    padding:4px 11px; border-radius:99px; white-space:nowrap;}
+  .badge .d{width:6px; height:6px; border-radius:50%; background:currentColor;}
+  .b-pending{color:#F5D08A; background:rgba(215,154,58,.12);}
+  .b-ready{color:#7DE6D6; background:rgba(45,212,191,.12);}
+  .b-used{color:#F0A49B; background:rgba(209,85,74,.12);}
+  .acts{display:flex; gap:7px; flex-wrap:wrap;}
+  .empty{padding:40px 20px; text-align:center; color:var(--ink-dim); font-size:13px; display:none;}
+  .empty.show{display:block;}
+  .empty .em{font-size:34px; margin-bottom:8px;}
+
+  /* skeleton */
+  .sk{display:none;}
+  .sk.show{display:block;}
+  .skrow{height:52px; border-radius:10px; margin-bottom:8px;
+    background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.08),rgba(255,255,255,.035));
+    background-size:200% 100%; animation:sh 1.3s infinite;}
+  @keyframes sh{to{background-position:-200% 0;}}
+
+  footer{text-align:center; margin-top:30px; font-size:11.5px; color:var(--ink-dim);}
+  footer b{color:var(--ink-soft);}
+
+  @media (max-width:760px){
+    body{padding:22px 14px 50px;}
+    .stats{grid-template-columns:repeat(2,1fr); gap:10px;}
+    .grid2, .keyrow{grid-template-columns:1fr;}
+    .card{padding:17px; border-radius:16px;}
   }
-  button {
-    background: #4f7cff;
-    color: #fff;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  button:hover { background: #3a63e0; }
-  button.secondary { background: #333744; }
-  button.secondary:hover { background: #444a5a; }
-  button.approve-btn { background: #22c55e; padding: 6px 14px; font-size: 12.5px; }
-  button.approve-btn:hover { background: #16a34a; }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 200px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid #2a2e37; }
-  th { color: #999; font-weight: normal; }
-  .status-approved { color: #4ade80; }
-  .status-pending { color: #fbbf24; }
-  .used-yes { color: #f87171; }
-  .used-no { color: #4ade80; }
-  .msg { margin-top: 10px; font-size: 13px; padding: 10px; border-radius: 8px; display:none; }
-  .msg.ok { background: #14321f; color: #4ade80; display:block; }
-  .msg.err { background: #3a1414; color: #f87171; display:block; }
-  .small { font-size: 12px; color: #888; }
-  .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #2a2e37; }
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>پنل مدیریت خریدها</h1>
-  <div class="sub">درخواست‌های مشتریان رو تأیید کن و وضعیت‌شون رو ببین</div>
+<div class="glow"><b class="g1"></b><b class="g2"></b><b class="g3"></b></div>
+<div class="grain"></div>
 
-  <div class="card">
-    <label>رمز ادمین</label>
-    <input type="password" id="adminKey" placeholder="رمزی که موقع wrangler secret put ADMIN_KEY گذاشتی">
-    <div class="small">این رمز فقط توی مرورگر خودت نگه داشته می‌شه، جایی فرستاده نمی‌شه تا وقتی روی دکمه‌ها کلیک کنی.</div>
-    <button onclick="loadList()" style="margin-top:10px;">بارگذاری درخواست‌ها</button>
+<div class="wrap">
+
+  <!-- header -->
+  <header>
+    <div class="brand">
+      <div class="mark">⚡</div>
+      <div>
+        <h1>پنل مدیریت Planner</h1>
+        <div class="tag">درخواست‌های مشتریان رو تأیید کن و وضعیت دانلود رو ببین</div>
+      </div>
+    </div>
+    <div class="key-chip" id="keyChip">
+      <span class="dot"></span><span id="keyState">رمز وارد نشده</span>
+    </div>
+  </header>
+
+  <!-- stats -->
+  <div class="stats" id="stats">
+    <div class="stat s1"><div class="n" id="st-total">–</div><div class="l">کل درخواست‌ها</div></div>
+    <div class="stat s2"><div class="n" id="st-pending">–</div><div class="l">در انتظار تأیید</div></div>
+    <div class="stat s3"><div class="n" id="st-ready">–</div><div class="l">آماده دانلود</div></div>
+    <div class="stat s4"><div class="n" id="st-used">–</div><div class="l">دانلود شده</div></div>
   </div>
 
-  <div class="card">
-    <div class="row">
+  <!-- admin key -->
+  <div class="card" id="keyCard">
+    <div class="card-h">
+      <h2><span class="ic">🔑</span>دسترسی ادمین</h2>
+      <span class="hint">رمز فقط توی همین مرورگر ذخیره می‌شه</span>
+    </div>
+    <div class="keyrow">
       <div>
-        <label>تأیید دستی یه ایمیل (حتی اگه خودش درخواست نداده)</label>
-        <input type="email" id="manualEmail" placeholder="customer@example.com">
+        <label>رمز ادمین (ADMIN_KEY)</label>
+        <input type="password" id="adminKey" class="inp mono" placeholder="رمزی که موقع wrangler secret put ADMIN_KEY گذاشتی" autocomplete="off">
       </div>
-      <div style="flex: 0 0 auto;">
-        <button onclick="manualApprove()">تأیید و ساخت توکن</button>
+      <button class="btn btn-primary" onclick="loadList()">ورود و بارگذاری</button>
+    </div>
+    <div id="keyMsg" class="msg"></div>
+  </div>
+
+  <!-- manual approve -->
+  <div class="card">
+    <div class="card-h">
+      <h2><span class="ic">✨</span>تأیید دستی یه ایمیل</h2>
+      <span class="hint">حتی اگه خودش درخواست نداده باشه</span>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>ایمیل مشتری</label>
+        <input type="email" id="manualEmail" class="inp" placeholder="customer@example.com" autocomplete="off">
       </div>
+      <button class="btn btn-primary" onclick="manualApprove()">تأیید و ساخت کد</button>
     </div>
     <div id="manualMsg" class="msg"></div>
-    <div id="manualTokenBox" class="small" style="display:none; margin-top:8px; direction:ltr; text-align:left; font-family:monospace; background:#0f1115; border:1px dashed #4f7cff; border-radius:8px; padding:10px;"></div>
-  </div>
-
-  <div class="card">
-    <div class="row">
-      <div><h1 style="font-size:16px;margin:0;">درخواست‌ها</h1></div>
-      <div style="flex: 0 0 auto;">
-        <button class="secondary" onclick="loadList()">بروزرسانی</button>
+    <div class="tokenbox" id="manualTokenBox">
+      <div class="lab">کد فعال‌سازی ساخته شد — این رو بفرست براش:</div>
+      <div class="tokenbar">
+        <span id="manualToken"></span>
+        <button class="btn btn-ghost btn-sm copy" onclick="copyText(document.getElementById('manualToken').textContent, this)">کپی</button>
       </div>
     </div>
-    <div id="listMsg" class="msg"></div>
-    <table id="listTable" style="display:none;">
-      <thead>
-        <tr><th>ایمیل</th><th>وضعیت</th><th>استفاده‌شده</th><th>تاریخ ثبت</th><th>کد فعال‌سازی</th><th>عملیات</th></tr>
-      </thead>
-      <tbody id="listBody"></tbody>
-    </table>
   </div>
+
+  <!-- requests list -->
+  <div class="card">
+    <div class="card-h">
+      <h2><span class="ic">📋</span>درخواست‌ها</h2>
+      <button class="btn btn-ghost btn-sm" onclick="loadList()">↻ بروزرسانی</button>
+    </div>
+
+    <div class="tools">
+      <div class="search">
+        <span class="mag">🔍</span>
+        <input type="text" id="searchBox" class="inp" placeholder="جستجو توی ایمیل‌ها…" autocomplete="off" oninput="renderList()">
+      </div>
+      <div class="seg">
+        <button class="on" data-f="all" onclick="setFilter('all')">همه</button>
+        <button data-f="pending" onclick="setFilter('pending')">انتظار</button>
+        <button data-f="approved" onclick="setFilter('approved')">تأیید شده</button>
+        <button data-f="used" onclick="setFilter('used')">دانلود شده</button>
+      </div>
+    </div>
+
+    <div id="listMsg" class="msg"></div>
+    <div class="sk" id="skel"><div class="skrow"></div><div class="skrow"></div><div class="skrow"></div><div class="skrow"></div></div>
+    <div class="tblwrap" id="tblwrap">
+      <table>
+        <thead>
+          <tr><th>ایمیل</th><th>وضعیت</th><th>تاریخ ثبت</th><th>کد فعال‌سازی</th><th>عملیات</th></tr>
+        </thead>
+        <tbody id="listBody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyBox"><div class="em">📭</div>هنوز هیچ درخواستی ثبت نشده</div>
+  </div>
+
+  <footer>ساخته‌شده با ❤️ برای <b>Planner</b> · همه‌چیز روی سرور خودته</footer>
 </div>
 
 <script>
 const API_BASE = "https://planner-backend.q2cfdqaivkrmau1lv1somzyh5kar2s.workers.dev";
+const STORAGE_KEY = "planner-admin-key-v1";
 
-function getKey() {
-  return document.getElementById('adminKey').value.trim();
+let allItems = [];
+let curFilter = "all";
+
+// restore saved key so a refresh doesn't kick you out
+(function init(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    document.getElementById('adminKey').value = saved;
+    setKeyChip(true);
+  }
+  document.getElementById('adminKey').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadList();
+  });
+})();
+
+function getKey(){ return document.getElementById('adminKey').value.trim(); }
+
+function setKeyChip(ok){
+  const chip = document.getElementById('keyChip');
+  chip.classList.toggle('ok', ok);
+  document.getElementById('keyState').textContent = ok ? 'وارد شده ✓' : 'رمز وارد نشده';
 }
 
-async function manualApprove() {
+function showMsg(el, text, kind){
+  el.textContent = text;
+  el.className = 'msg ' + kind;
+  el.style.display = 'block';
+}
+function hideMsg(el){ el.style.display = 'none'; el.className = 'msg'; }
+
+// ---------- manual approve ----------
+async function manualApprove(){
   const adminKey = getKey();
   const email = document.getElementById('manualEmail').value.trim();
   const msg = document.getElementById('manualMsg');
   const tokenBox = document.getElementById('manualTokenBox');
-  msg.style.display = 'none';
-  tokenBox.style.display = 'none';
+  hideMsg(msg); tokenBox.classList.remove('show');
 
-  if (!adminKey) { showMsg(msg, 'رمز ادمین رو وارد کن.', false); return; }
-  if (!email) { showMsg(msg, 'ایمیل رو وارد کن.', false); return; }
+  if (!adminKey){ showMsg(msg, 'اول رمز ادمین رو وارد کن.', 'err'); return; }
+  if (!email){ showMsg(msg, 'ایمیل رو وارد کن.', 'err'); return; }
 
-  try {
+  try{
     const res = await fetch(`${API_BASE}/api/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email, adminKey })
     });
     const data = await res.json();
-    if (!res.ok) { showMsg(msg, data.error || 'خطا رخ داد.', false); return; }
-    showMsg(msg, 'تأیید شد! کد فعال‌سازی ساخته شد:', true);
-    tokenBox.style.display = 'block';
-    tokenBox.textContent = data.token;
+    if (!res.ok){ showMsg(msg, data.error || 'خطا رخ داد.', 'err'); return; }
+
+    localStorage.setItem(STORAGE_KEY, adminKey);
+    setKeyChip(true);
+    showMsg(msg, 'تأیید شد! کد فعال‌سازی ساخته شد.', 'ok');
+    tokenBox.classList.add('show');
+    document.getElementById('manualToken').textContent = data.token;
     document.getElementById('manualEmail').value = '';
     loadList();
-  } catch (e) {
-    showMsg(msg, 'خطا در اتصال به سرور.', false);
+  }catch(e){
+    showMsg(msg, 'خطا در اتصال به سرور.', 'err');
   }
 }
 
-async function approveEmail(email, btnEl) {
+// ---------- approve from list ----------
+async function approveEmail(email, btnEl){
   const adminKey = getKey();
-  if (!adminKey) { alert('اول رمز ادمین رو بزن.'); return; }
-  btnEl.disabled = true;
-  btnEl.textContent = '...';
-  try {
+  if (!adminKey){ showMsg(document.getElementById('listMsg'), 'اول رمز ادمین رو بزن.', 'err'); return; }
+  btnEl.disabled = true; btnEl.textContent = 'صبر کن…';
+  try{
     const res = await fetch(`${API_BASE}/api/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email, adminKey })
     });
     const data = await res.json();
-    if (!res.ok) {
-      alert(data.error || 'خطا رخ داد.');
-      btnEl.disabled = false;
-      btnEl.textContent = 'تأیید';
+    if (!res.ok){
+      showMsg(document.getElementById('listMsg'), data.error || 'خطا رخ داد.', 'err');
+      btnEl.disabled = false; btnEl.textContent = 'تأیید';
       return;
     }
     loadList();
-  } catch (e) {
-    alert('خطا در اتصال به سرور.');
-    btnEl.disabled = false;
-    btnEl.textContent = 'تأیید';
+  }catch(e){
+    showMsg(document.getElementById('listMsg'), 'خطا در اتصال به سرور.', 'err');
+    btnEl.disabled = false; btnEl.textContent = 'تأیید';
   }
 }
 
-async function loadList() {
+// ---------- load list ----------
+async function loadList(){
   const adminKey = getKey();
   const msg = document.getElementById('listMsg');
-  const table = document.getElementById('listTable');
-  const body = document.getElementById('listBody');
-  msg.style.display = 'none';
+  const skel = document.getElementById('skel');
+  hideMsg(msg);
 
-  if (!adminKey) { showMsg(msg, 'رمز ادمین رو وارد کن.', false); return; }
+  if (!adminKey){ showMsg(msg, 'رمز ادمین رو وارد کن.', 'err'); return; }
 
-  try {
+  skel.classList.add('show');
+  document.getElementById('tblwrap').classList.remove('show');
+  document.getElementById('emptyBox').classList.remove('show');
+
+  try{
     const res = await fetch(`${API_BASE}/api/list?adminKey=${encodeURIComponent(adminKey)}`);
     const data = await res.json();
-    if (!res.ok) { showMsg(msg, data.error || 'خطا رخ داد.', false); return; }
+    skel.classList.remove('show');
+    if (!res.ok){ showMsg(msg, data.error || 'خطا رخ داد.', 'err'); return; }
 
-    body.innerHTML = '';
-    data.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    for (const item of data.items) {
-      const tr = document.createElement('tr');
-      const actionCell = item.status === 'pending'
-        ? `<button class="approve-btn" onclick="approveEmail('${escapeAttr(item.email)}', this)">تأیید</button>`
-        : `<span class="pill">${item.used ? 'دانلود شده' : 'آماده دانلود'}</span>`;
-      const tokenCell = item.token
-        ? `<button class="secondary" style="padding:6px 10px;font-size:12px;" onclick="copyToken('${escapeAttr(item.token)}', this)">کپی کد</button>`
-        : '<span class="small">—</span>';
-      tr.innerHTML = `
-        <td>${escapeHtml(item.email)}</td>
-        <td class="${item.status === 'approved' ? 'status-approved' : 'status-pending'}">${item.status === 'approved' ? 'تأیید شده' : 'در انتظار'}</td>
-        <td class="${item.used ? 'used-yes' : 'used-no'}">${item.used ? 'بله' : 'خیر'}</td>
-        <td>${new Date(item.createdAt).toLocaleDateString('fa-IR')}</td>
-        <td>${tokenCell}</td>
-        <td>${actionCell}</td>
-      `;
-      body.appendChild(tr);
-    }
-    table.style.display = data.items.length ? 'table' : 'none';
-    if (!data.items.length) showMsg(msg, 'هنوز هیچ درخواستی ثبت نشده.', true);
-  } catch (e) {
-    showMsg(msg, 'خطا در اتصال به سرور.', false);
+    localStorage.setItem(STORAGE_KEY, adminKey);
+    setKeyChip(true);
+    allItems = data.items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    renderStats();
+    renderList();
+  }catch(e){
+    skel.classList.remove('show');
+    showMsg(msg, 'خطا در اتصال به سرور.', 'err');
   }
 }
 
-function showMsg(el, text, ok) {
-  el.textContent = text;
-  el.className = 'msg ' + (ok ? 'ok' : 'err');
-  el.style.display = 'block';
+function renderStats(){
+  const total = allItems.length;
+  const pending = allItems.filter(i => i.status === 'pending').length;
+  const used = allItems.filter(i => i.used).length;
+  const ready = allItems.filter(i => i.status === 'approved' && !i.used).length;
+  document.getElementById('st-total').textContent = total.toLocaleString('fa-IR');
+  document.getElementById('st-pending').textContent = pending.toLocaleString('fa-IR');
+  document.getElementById('st-ready').textContent = ready.toLocaleString('fa-IR');
+  document.getElementById('st-used').textContent = used.toLocaleString('fa-IR');
 }
 
-function escapeHtml(str) {
+function setFilter(f){
+  curFilter = f;
+  document.querySelectorAll('.seg button').forEach(b =>
+    b.classList.toggle('on', b.dataset.f === f));
+  renderList();
+}
+
+function renderList(){
+  const body = document.getElementById('listBody');
+  const wrap = document.getElementById('tblwrap');
+  const empty = document.getElementById('emptyBox');
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+
+  let items = allItems.filter(i => {
+    if (q && !i.email.toLowerCase().includes(q)) return false;
+    if (curFilter === 'pending' && i.status !== 'pending') return false;
+    if (curFilter === 'approved' && !(i.status === 'approved' && !i.used)) return false;
+    if (curFilter === 'used' && !i.used) return false;
+    return true;
+  });
+
+  body.innerHTML = '';
+
+  for (const item of items){
+    const tr = document.createElement('tr');
+    let badge, action;
+    if (item.status === 'pending'){
+      badge = `<span class="badge b-pending"><span class="d"></span>در انتظار</span>`;
+      action = `<button class="btn btn-primary btn-sm" onclick="approveEmail('${esc(item.email)}', this)">تأیید</button>`;
+    } else if (item.used){
+      badge = `<span class="badge b-used"><span class="d"></span>دانلود شده</span>`;
+      action = `<span class="hint">تمام شد</span>`;
+    } else {
+      badge = `<span class="badge b-ready"><span class="d"></span>آماده دانلود</span>`;
+      action = `<button class="btn btn-ghost btn-sm" onclick="copyLink('${esc(item.email)}','${esc(item.token)}', this)">کپی لینک</button>`;
+    }
+    const tokenCell = item.token
+      ? `<button class="btn btn-ghost btn-sm" onclick="copyText('${esc(item.token)}', this)">کپی کد</button>`
+      : '<span class="hint">—</span>';
+    tr.innerHTML = `
+      <td><div class="email">${escHtml(item.email)}</div></td>
+      <td>${badge}</td>
+      <td class="date">${fmtDate(item.createdAt)}</td>
+      <td>${tokenCell}</td>
+      <td><div class="acts">${action}</div></td>`;
+    body.appendChild(tr);
+  }
+
+  const none = items.length === 0;
+  wrap.classList.toggle('show', !none);
+  empty.classList.toggle('show', none && allItems.length > 0);
+  if (!allItems.length){
+    const msg = document.getElementById('listMsg');
+    showMsg(msg, 'هنوز هیچ درخواستی ثبت نشده.', 'info');
+  }
+}
+
+function fmtDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fa-IR') + ' · ' +
+         d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+}
+
+function esc(s){ return String(s).replace(/'/g, "\\'"); }
+function escHtml(str){
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
-function escapeAttr(str) {
-  return String(str).replace(/'/g, "\\'");
-}
 
-function copyToken(token, btnEl) {
-  navigator.clipboard.writeText(token).then(() => {
-    const original = btnEl.textContent;
-    btnEl.textContent = 'کپی شد!';
-    setTimeout(() => { btnEl.textContent = original; }, 1500);
-  }).catch(() => {
-    prompt('این کد رو کپی کن:', token);
-  });
+// ---------- copy helpers ----------
+function copyText(text, btnEl){
+  const original = btnEl.textContent;
+  const done = () => { btnEl.textContent = 'کپی شد ✓'; setTimeout(() => btnEl.textContent = original, 1400); };
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done(); }catch(e){}
+  document.body.removeChild(ta);
+}
+function copyLink(email, token, btnEl){
+  const link = `${API_BASE}/api/download?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+  copyText(link, btnEl);
 }
 </script>
 </body>
